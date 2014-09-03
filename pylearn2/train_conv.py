@@ -20,8 +20,8 @@ def main():
                     'valid_stop': 50050,
                     'test_stop': 50,
                     'batch_size': 50,
-                    'output_channels_h2': 4,
-                    'output_channels_h3': 4,
+                    'output_channels_h0': 32,
+                    'output_channels_h1': 32,
                     'max_epochs': 10,
                     'data_path': data_path,
                     'save_path': save_path}

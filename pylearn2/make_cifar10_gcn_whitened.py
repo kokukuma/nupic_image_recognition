@@ -13,7 +13,7 @@ from data import cifar10
 data_dir = string_utils.preprocess('./data')
 
 print 'Loading CIFAR-10 train dataset...'
-train = cifar10.CIFAR10(which_set = 'train', gcn = 55.)
+train = cifar10.CIFAR10(which_set = 'train', gcn = 55., axes=('b', 'c', 0, 1))
 
 print "Preparing output directory..."
 output_dir = data_dir + '/pylearn2_gcn_whitened'
@@ -50,7 +50,7 @@ train.use_design_loc(output_dir+'/train.npy')
 serial.save(output_dir + '/train.pkl', train)
 
 print "Loading the test data"
-test = cifar10.CIFAR10(which_set = 'test', gcn = 55.)
+test = cifar10.CIFAR10(which_set = 'test', gcn = 55., axes=('b', 'c', 0, 1))
 
 print "Preprocessing the test data"
 test.apply_preprocessor(preprocessor = preprocessor, can_fit = False)

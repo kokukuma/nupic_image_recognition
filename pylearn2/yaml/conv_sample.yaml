@@ -3,7 +3,11 @@
         preprocessed_dataset: !pkl: "%(data_path)s/pylearn2_gcn_whitened/train.pkl",
         preprocessor: !pkl: "%(data_path)s/pylearn2_gcn_whitened/preprocessor.pkl",
         convert_to_one_hot: 0,
-        axes: ['b', 'c', 0, 1]
+        start: 0,
+        stop: 49000,
+    # 
+        #axes: ['b', 0, 1, 'c']
+        axes: ['b','c', 0, 1]
     },
     #dataset: !pkl: "data/cifar10_preprocessed_train.pkl",
     # dataset: &train !obj:pylearn2.datasets.mnist.MNIST {
@@ -17,24 +21,80 @@
         input_space: !obj:pylearn2.space.Conv2DSpace {
             shape: [32, 32],
             num_channels: 3,
-            axes: ['b', 'c', 0, 1]
+            #axes: ['b', 0, 1, 'c']
+            axes: ['b','c', 0, 1]
         },
-        layers: [ !obj:pylearn2.models.mlp.ConvRectifiedLinear {
-                     layer_name: 'h2',
-                     output_channels: %(output_channels_h2)i,
+        layers: [ 
+                 #--------------------------- ConvRectifiedLinear
+                 !obj:pylearn2.models.mlp.ConvRectifiedLinear {
+                     layer_name: 'h0',
+                     output_channels: %(output_channels_h0)i,
                      irange: .05,
                      kernel_shape: [5, 5],
                      pool_shape: [4, 4],
                      pool_stride: [2, 2],
                      max_kernel_norm: 1.9365
                  }, !obj:pylearn2.models.mlp.ConvRectifiedLinear {
-                     layer_name: 'h3',
-                     output_channels: %(output_channels_h3)i,
+                     layer_name: 'h1',
+                     output_channels: %(output_channels_h1)i,
                      irange: .05,
                      kernel_shape: [5, 5],
                      pool_shape: [4, 4],
                      pool_stride: [2, 2],
                      max_kernel_norm: 1.9365
+
+                 # #--------------------------- maxout
+                 # # MaxoutConvC01B'> only runs on GPUs, but there doesn't seem to be a GPU available.
+                 # !obj:pylearn2.models.maxout.MaxoutConvC01B {
+                 #     layer_name: 'h0',
+                 #     pad: 4,
+                 #     tied_b: 1,
+                 #     W_lr_scale: .05,
+                 #     b_lr_scale: .05,
+                 #     num_channels: 96,
+                 #     num_pieces: 2,
+                 #     kernel_shape: [8, 8],
+                 #     pool_shape: [4, 4],
+                 #     pool_stride: [2, 2],
+                 #     irange: .005,
+                 #     max_kernel_norm: .9,
+                 #     partial_sum: 33,
+                 # },
+                 # !obj:pylearn2.models.maxout.MaxoutConvC01B {
+                 #     layer_name: 'h1',
+                 #     pad: 3,
+                 #     tied_b: 1,
+                 #     W_lr_scale: .05,
+                 #     b_lr_scale: .05,
+                 #     num_channels: 192,
+                 #     num_pieces: 2,
+                 #     kernel_shape: [8, 8],
+                 #     pool_shape: [4, 4],
+                 #     pool_stride: [2, 2],
+                 #     irange: .005,
+                 #     max_kernel_norm: 1.9365,
+                 #     partial_sum: 15,
+                 # },
+                 # !obj:pylearn2.models.maxout.MaxoutConvC01B {
+                 #     pad: 3,
+                 #     layer_name: 'h2',
+                 #     tied_b: 1,
+                 #     W_lr_scale: .05,
+                 #     b_lr_scale: .05,
+                 #     num_channels: 192,
+                 #     num_pieces: 2,
+                 #     kernel_shape: [5, 5],
+                 #     pool_shape: [2, 2],
+                 #     pool_stride: [2, 2],
+                 #     irange: .005,
+                 #     max_kernel_norm: 1.9365,
+                 # },
+                 # }, !obj:pylearn2.models.maxout.Maxout {
+                 #    layer_name: 'h3',
+                 #    irange: .005,
+                 #    num_units: 500,
+                 #    num_pieces: 5,
+                 #    max_col_norm: 1.9
                  }, !obj:pylearn2.models.mlp.Softmax {
                      max_col_norm: 1.9365,
                      layer_name: 'y',
@@ -45,20 +105,70 @@
     },
     algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {
         batch_size: %(batch_size)i,
-        learning_rate: .01,
+        learning_rate: .001,
         learning_rule: !obj:pylearn2.training_algorithms.learning_rule.Momentum {
             init_momentum: .5
         },
         monitoring_dataset: {
+            # 'test' : !obj:pylearn2.datasets.zca_dataset.ZCA_Dataset {
+            #     preprocessed_dataset: !pkl: "%(data_path)s/pylearn2_gcn_whitened/test.pkl",
+            #     preprocessor: !pkl: "%(data_path)s/pylearn2_gcn_whitened/preprocessor.pkl",
+            #     convert_to_one_hot: 0,
+            #     axes: ['b','c', 0, 1]
+            # },
             'valid' : !obj:pylearn2.datasets.zca_dataset.ZCA_Dataset {
-                preprocessed_dataset: !pkl: "%(data_path)s/pylearn2_gcn_whitened/test.pkl",
+                preprocessed_dataset: !pkl: "%(data_path)s/pylearn2_gcn_whitened/train.pkl",
                 preprocessor: !pkl: "%(data_path)s/pylearn2_gcn_whitened/preprocessor.pkl",
                 convert_to_one_hot: 0,
-                axes: ['b', 'c', 0, 1]
+                start: 49000, 
+                stop: 50000,
+                axes: ['b','c', 0, 1]
+            },
+            'train' : !obj:pylearn2.datasets.zca_dataset.ZCA_Dataset {
+                preprocessed_dataset: !pkl: "%(data_path)s/pylearn2_gcn_whitened/train.pkl",
+                preprocessor: !pkl: "%(data_path)s/pylearn2_gcn_whitened/preprocessor.pkl",
+                convert_to_one_hot: 0,
+                start: 0, 
+                stop: 1000,
+                axes: ['b','c', 0, 1]
             },
         },
+        termination_criterion: !obj:pylearn2.termination_criteria.And {
+            criteria: [
+                !obj:pylearn2.termination_criteria.MonitorBased {
+                    channel_name: "valid_y_misclass",
+                    prop_decrease: 0.01,
+                    N: 10
+                },
+                !obj:pylearn2.termination_criteria.EpochCounter {
+                    max_epochs: %(max_epochs)i
+                },
+            ]
+        },
 
-        #monitoring_dataset: !pkl: "data/cifar10_preprocessed_train.pkl",
+        # 
+        # cost: !obj:pylearn2.costs.mlp.dropout.Dropout {
+        #     input_include_probs: { 'h0' : .8 },
+        #     input_scales: { 'h0': 1. }
+        # },
+        cost: !obj:pylearn2.costs.cost.SumOfCosts { costs: [
+            !obj:pylearn2.costs.cost.MethodCost {
+                method: 'cost_from_X'
+            }, !obj:pylearn2.costs.mlp.WeightDecay {
+                coeffs: [ .00005, .00005, .00005 ]
+            }
+            ]
+        },
+
+        # termination_criterion: !obj:pylearn2.termination_criteria.MonitorBased {
+        #     channel_name: "valid_y_misclass",
+        #     prop_decrease: 0.,
+        #     N: 100
+        # },
+        # train_iteration_mode: 'even_shuffled_sequential',
+        # monitor_iteration_mode: 'even_sequential',
+        #
+        # monitoring_dataset: !pkl: "data/cifar10_preprocessed_train.pkl",
         # monitoring_dataset:{
         #         'valid' : !obj:pylearn2.datasets.mnist.MNIST {
         #                       which_set: 'train',
@@ -72,37 +182,14 @@
         #                       stop: %(test_stop)i
         #                   }
         # },
-        cost: !obj:pylearn2.costs.cost.SumOfCosts { costs: [
-            !obj:pylearn2.costs.cost.MethodCost {
-                method: 'cost_from_X'
-            }, !obj:pylearn2.costs.mlp.WeightDecay {
-                coeffs: [ .00005, .00005, .00005 ]
-            }
-            ]
-        },
-        # termination_criterion: !obj:pylearn2.termination_criteria.MonitorBased {
-        #     channel_name: "valid_y_misclass",
-        #     prop_decrease: 0.,
-        #     N: 100
+        # cost: !obj:pylearn2.costs.cost.SumOfCosts { costs: [
+        #     !obj:pylearn2.costs.cost.MethodCost {
+        #         method: 'cost_from_X'
+        #     }, !obj:pylearn2.costs.mlp.WeightDecay {
+        #         coeffs: [ .00005, .00005, .00005 ]
+        #     }
+        #     ]
         # },
-        # train_iteration_mode: 'even_shuffled_sequential',
-        # monitor_iteration_mode: 'even_sequential',
-        # cost: !obj:pylearn2.costs.mlp.dropout.Dropout {
-        #     input_include_probs: { 'h2' : .8 },
-        #     input_scales: { 'h2': 1. }
-        # },
-        termination_criterion: !obj:pylearn2.termination_criteria.And {
-            criteria: [
-                !obj:pylearn2.termination_criteria.MonitorBased {
-                    channel_name: "valid_y_misclass",
-                    prop_decrease: 0.50,
-                    N: 10
-                },
-                # !obj:pylearn2.termination_criteria.EpochCounter {
-                #     max_epochs: %(max_epochs)i
-                # },
-            ]
-        },
     },
     extensions:
         [ !obj:pylearn2.train_extensions.best_params.MonitorBasedSaveBest {
