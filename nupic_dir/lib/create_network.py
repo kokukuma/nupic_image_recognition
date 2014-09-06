@@ -20,7 +20,7 @@ sensor_params = {
             "dataType": "float",
             "n": 200,
             "w": 21,
-            "length": 75,
+            "length": 192,
             "fieldname": u"pixel",
             "name": u"pixel",
             "maxval":  15.0,

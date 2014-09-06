@@ -27,7 +27,7 @@ def main():
 
     tobological_data, label = load_dataset('./data/pylearn2_gcn_whitened/train.pkl')
     for i, data in enumerate(tobological_data[:1000]):
-        patch_data, movement = get_patch(data, height=5, width=5, step=3)
+        patch_data, movement = get_patch(data, height=8, width=8, step=3)
 
         print '%d, label:%s, ' % (i, label[i][0]),
         for data in patch_data:
@@ -46,7 +46,7 @@ def main():
 
     tobological_data, label = load_dataset('./data/pylearn2_gcn_whitened/test.pkl')
     for i, data in enumerate(tobological_data):
-        patch_data, movement = get_patch(data, height=3, width=3, step=3)
+        patch_data, movement = get_patch(data, height=8, width=8, step=3)
 
         print '%d, label:%s, ' % (i, label[i][0]),
         for data in patch_data:

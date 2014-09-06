@@ -30,7 +30,7 @@ config = \
                                                        "dataType": "float",
                                                        "n": 200,
                                                        "w": 21,
-                                                       "length": 192,
+                                                       "length": 9,
                                                        "fieldname": u"pixel",
                                                        "name": u"pixel",
                                                        "maxval":  15.0,
