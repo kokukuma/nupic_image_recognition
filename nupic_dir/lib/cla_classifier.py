@@ -255,10 +255,9 @@ class ClaClassifier():
 
         # learn classifier
         inferences = {}
-        if class_learn:
-            for name in self.dest_region_params.keys():
-                class_name = "class_" + name
-                inferences['classifier_'+name]   = self._learn_classifier_multi(class_name, actValue=input_data[self.predict_value], pstep=self.predict_step)
+        for name in self.dest_region_params.keys():
+            class_name = "class_" + name
+            inferences['classifier_'+name]   = self._learn_classifier_multi(class_name, actValue=input_data[self.predict_value], pstep=self.predict_step)
 
 
 

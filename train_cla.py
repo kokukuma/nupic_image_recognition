@@ -3,7 +3,7 @@
 
 from pprint import pprint
 from pylab import *
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 from nupic_dir.lib.cla_classifier import ClaClassifier
 from nupic_dir.lib.function_data import function_data
@@ -12,7 +12,38 @@ from nupic_dir.lib.create_network import net_structure, sensor_params, dest_resg
 from nupic_dir.lib.load_data import load_dataset, get_patch
 
 
-#def train(recogniter, ,label):
+test_data, test_label   = load_dataset('./data/pylearn2_gcn_whitened/test.pkl')
+train_data, train_label = load_dataset('./data/pylearn2_gcn_whitened/train.pkl')
+patch_heigh = 8
+patch_width = 8
+patch_step  = 3
+
+
+def validate(recogniter, test_data, test_label, limit=100):
+    result = []
+    tdata = test_data[:limit]
+    for i, data in enumerate(tdata):
+        patch_result = Counter()
+        patch_data, movement = get_patch(data, height=patch_heigh, width=patch_width, step=patch_step)
+
+        for patch in patch_data:
+            input_len = reduce(lambda x,y: x * y, patch.shape)
+            input_data = {
+                    'pixel': patch.reshape((input_len)).tolist() ,
+                    'label': 'no'
+                    }
+            inferences = recogniter.run(input_data, learn=False, class_learn=False,learn_layer=None)
+
+
+            best_result = inferences['classifier_region1']['best']
+            patch_result[best_result['value']] += best_result['prob']
+
+        if test_label[i][0] == max(patch_result.items(), key=lambda x:x[1])[0]:
+            result.append(1)
+
+        recogniter.reset()
+
+    return len(result)/len(tdata)
 
 
 #@profile
@@ -24,61 +55,26 @@ def main():
 
     recogniter = ClaClassifier(net_structure, sensor_params, dest_resgion_data, class_encoder_params)
 
+    print 'training ...'
+    for i, data in enumerate(train_data[:1000]):
 
-    tobological_data, label = load_dataset('./data/pylearn2_gcn_whitened/train.pkl')
-    for i, data in enumerate(tobological_data[:1000]):
-        patch_data, movement = get_patch(data, height=8, width=8, step=3)
+        patch_data, movement = get_patch(data, height=patch_heigh, width=patch_width, step=patch_step)
 
-        print '%d, label:%s, ' % (i, label[i][0]),
-        for data in patch_data:
-            input_len = reduce(lambda x,y: x * y, data.shape)
+        for patch in patch_data:
+            input_len = reduce(lambda x,y: x * y, patch.shape)
             input_data = {
-                    'pixel': data.reshape((input_len)).tolist() ,
-                    'label': label[i][0]
+                    'pixel': patch.reshape((input_len)).tolist() ,
+                    'label': train_label[i][0]
                     }
-            if i > 900:
-                inferences = recogniter.run(input_data, learn=True, class_learn=True, learn_layer=None)
-            else:
-                inferences = recogniter.run(input_data, learn=True, class_learn=False, learn_layer=None)
+            inferences = recogniter.run(input_data, learn=True, class_learn=True, learn_layer=None)
 
             recogniter.print_inferences(input_data, inferences)
         recogniter.reset()
 
-    tobological_data, label = load_dataset('./data/pylearn2_gcn_whitened/test.pkl')
-    for i, data in enumerate(tobological_data):
-        patch_data, movement = get_patch(data, height=8, width=8, step=3)
-
-        print '%d, label:%s, ' % (i, label[i][0]),
-        for data in patch_data:
-            input_len = reduce(lambda x,y: x * y, data.shape)
-            input_data = {
-                    'pixel': data.reshape((input_len)).tolist() ,
-                    'label': 'no'
-                    }
-            inferences = recogniter.run(input_data, learn=False, class_learn=False,learn_layer=None)
-
-            recogniter.print_inferences(input_data, inferences)
-        recogniter.reset()
-
-
-    # # トレーニング
-    # #for learn_layer in [['region1'], ]:
-    # for num, ftype in enumerate(fd.function_list.keys()):
-    #     data  = fd.get_data(ftype)
-    #     label = fd.get_label(ftype)
-    #     for x, y in data:
-    #         input_data = {
-    #                 'xy_value': [x, y],
-    #                 'x_value': x,
-    #                 'y_value': y,
-    #                 'ftype': label
-    #                 }
-    #
-    #         inferences = recogniter.run(input_data, learn=True, learn_layer=learn_layer)
-    #
-    #         # print
-    #         recogniter.print_inferences(input_data, inferences)
-    #     recogniter.reset()
+        # validate
+        if i % 3 == 0:
+            valid = validate(recogniter, test_data, test_label, limit=30)
+            print '%d : valid: %8.5f' % (i, valid)
 
 if __name__ == "__main__":
     main()
