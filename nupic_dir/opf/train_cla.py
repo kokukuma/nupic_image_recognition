@@ -46,6 +46,7 @@ def main():
             print label[i][0], result.inferences['multiStepBestPredictions']
 
 
+    model.disableLearning()
     tobological_data, label = load_dataset('./data/pylearn2_gcn_whitened/test.pkl')
     for i, data in enumerate(tobological_data):
         patch_data, movement = get_patch(data, height=8, width=8, step=3)
