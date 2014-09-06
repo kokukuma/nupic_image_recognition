@@ -10,18 +10,18 @@ def main():
     skip.skip_if_no_data()
 
     # setting
-    yaml_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'yaml'))
-    data_path = './data'
-    save_path = './result'
+    data_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
+    save_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'pylearn2/result'))
+    yaml_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'pylearn2/yaml'))
 
     # set hyper parameter
-    yaml = open("{0}/conv_sample.yaml".format(yaml_file_path), 'r').read()
+    yaml = open("{0}/conv_sample.yaml".format(yaml_path), 'r').read()
     hyper_params = {'train_stop': 50,
                     'valid_stop': 50050,
                     'test_stop': 50,
                     'batch_size': 50,
-                    'output_channels_h0': 32,
-                    'output_channels_h1': 32,
+                    'output_channels_h0': 2,
+                    'output_channels_h1': 2,
                     'max_epochs': 10,
                     'data_path': data_path,
                     'save_path': save_path}
