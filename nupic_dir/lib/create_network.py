@@ -14,20 +14,18 @@ https://github.com/numenta/nupic/issues/727
 """
 sensor_params = {
     'sensor1': {
-        "xy_value": {
+        "pixel": {
             "clipInput": True,
             "type": "VectorEncoderOPF",
             "dataType": "float",
             "n": 200,
             "w": 21,
-            "length": 2,
-            "fieldname": u"xy_value",
-            "name": u"xy_value",
-            "maxval": 100.0,
-            "minval": 0.0,
+            "length": 75,
+            "fieldname": u"pixel",
+            "name": u"pixel",
+            "maxval":  15.0,
+            "minval": -15.0,
         },
-        'x_value': None,
-        'y_value': None,
     },
 }
 
@@ -54,11 +52,11 @@ dest_resgion_data = {
  }
 
 class_encoder_params = {
-    "ftype": {
+    "label": {
         "type": "CategoryEncoder",
-        "fieldname": u"ftype",
-        "name": u"ftype",
-        "categoryList": ['plus', 'minus', 'flat', 'sin', 'quad', 'step'],
+        "fieldname": u"label",
+        "name": u"label",
+        "categoryList": [i for i in range(10)],
         "w": 21,
         },
     }

@@ -47,7 +47,6 @@ def get_patch(tdata, height=3, width=3, step=1, type='slide'):
     for j, y_id in enumerate(range(0, patch_y, step)):
         rev = (j % 2 == 1)
         for x_id in sorted(range(0, patch_x, step), reverse=rev):
-            print patch_id,x_id, y_id
             get_patch_data(tdata, x_id, y_id, patch_id)
             movement[patch_id][0]  = x_id
             movement[patch_id][1]  = y_id

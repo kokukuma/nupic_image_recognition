@@ -229,7 +229,8 @@ class ClaClassifier():
         return
 
 
-    def run(self, input_data, learn=True, learn_layer=None):
+    #@profile
+    def run(self, input_data, learn=True, class_learn=True,learn_layer=None):
         """
         networkの実行.
         学習したいときは, learn=True, ftypeを指定する.
@@ -240,6 +241,8 @@ class ClaClassifier():
         """
 
         self.enable_learning_mode(learn, learn_layer)
+        self.enable_class_learning_mode(class_learn)
+
         self.run_number += 1
 
         # calc encoder, SP, TP
@@ -252,9 +255,10 @@ class ClaClassifier():
 
         # learn classifier
         inferences = {}
-        for name in self.dest_region_params.keys():
-            class_name = "class_" + name
-            inferences['classifier_'+name]   = self._learn_classifier_multi(class_name, actValue=input_data[self.predict_value], pstep=self.predict_step)
+        if class_learn:
+            for name in self.dest_region_params.keys():
+                class_name = "class_" + name
+                inferences['classifier_'+name]   = self._learn_classifier_multi(class_name, actValue=input_data[self.predict_value], pstep=self.predict_step)
 
 
 
@@ -357,6 +361,14 @@ class ClaClassifier():
         for name in self.dest_region_params.keys():
             self.network.regions["tp_"+name].getSelf().resetSequenceStates()
 
+        for sensor_name in self.sensor_params.keys():
+            sensor = self.network.regions[sensor_name].getSelf()
+            sensor.dataSource = DataBuffer()
+
+    def enable_class_learning_mode(self, enable):
+        for name in self.dest_region_params.keys():
+            self.network.regions["class_"+name].setParameter("learningMode", enable)
+
     def enable_learning_mode(self, enable, layer_name = None):
         """
         各層のSP, TP, ClassifierのlearningModeを変更
@@ -382,17 +394,21 @@ class ClaClassifier():
         計算結果を出力する
         """
 
-        print "%10s, %10s, %1s" % (
-                int(input_data['xy_value'][0]),
-                int(input_data['xy_value'][1]),
-                input_data['ftype'][:1]),
+        # print "%10s, %10s, %1s" % (
+        #         int(input_data['xy_value'][0]),
+        #         int(input_data['xy_value'][1]),
+        #         input_data['label'][:1]),
+        print "%5s" % (
+                input_data['label']),
 
+        try:
+            for name in sorted(self.dest_region_params.keys()):
+                print "%5s" % (inferences['classifier_'+name]['best']['value']),
 
-        for name in sorted(self.dest_region_params.keys()):
-            print "%1s" % (inferences['classifier_'+name]['best']['value'][:1]),
-
-        for name in sorted(self.dest_region_params.keys()):
-            print "%6.4f," % (inferences['classifier_'+name]['likelihoodsDict'][input_data[self.predict_value]]),
+            for name in sorted(self.dest_region_params.keys()):
+                print "%6.4f," % (inferences['classifier_'+name]['likelihoodsDict'][input_data[self.predict_value]]),
+        except:
+            pass
 
         for name in sorted(self.dest_region_params.keys()):
             print "%3.2f," % (inferences["anomaly"][name]),
@@ -425,6 +441,7 @@ class ClaClassifier():
             print "==== Predict ===="
             print TPRegion.getSelf()._tfdr.topDownCompute().copy().nonzero()[0][:10]
             print
+
     def save(self, path):
         import pickle
         with open(path, 'wb') as modelPickleFile:
