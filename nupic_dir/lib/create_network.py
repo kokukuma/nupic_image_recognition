@@ -3,7 +3,7 @@
 
 net_structure = {
         'sensor1': ['region1'],
-        #'region1': ['region2']
+        'region1': ['region2']
         }
 
 """
@@ -18,14 +18,14 @@ sensor_params = {
             "clipInput": True,
             "type": "VectorEncoderOPF",
             "dataType": "float",
-            "n": 200,
+            "n": 1000,
             "w": 21,
-            #"length": 9,
-            "length": 192,
+            "length": 27,
+            #"length": 192,
             "fieldname": u"pixel",
             "name": u"pixel",
-            "maxval":  15.0,
-            "minval": -15.0,
+            "maxval":  1.5,
+            "minval": -1.5,
         },
     },
 }
@@ -35,21 +35,23 @@ dest_resgion_data = {
         'SP_PARAMS':{
             "columnCount": 2024,
             "numActiveColumnsPerInhArea": 40,
+            "potentialRadius": 100,   # default value: 16
             },
         'TP_PARAMS':{
             "cellsPerColumn": 32,
             },
         },
-    # 'region2': {
-    #     'SP_PARAMS':{
-    #         "inputWidth": 2024 * 32,
-    #         "columnCount": 2024,
-    #         "numActiveColumnsPerInhArea": 40,
-    #         },
-    #     'TP_PARAMS':{
-    #         "cellsPerColumn": 32,
-    #         },
-    #     },
+    'region2': {
+        'SP_PARAMS':{
+            "inputWidth": 2024 * 32,
+            "columnCount": 2024,
+            "potentialRadius": 100,   # default value: 16
+            "numActiveColumnsPerInhArea": 40,
+            },
+        'TP_PARAMS':{
+            "cellsPerColumn": 32,
+            },
+        },
  }
 
 class_encoder_params = {

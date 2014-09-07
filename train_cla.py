@@ -14,8 +14,8 @@ from nupic_dir.lib.load_data import load_dataset, get_patch
 
 test_data, test_label   = load_dataset('./data/pylearn2_gcn_whitened/test.pkl')
 train_data, train_label = load_dataset('./data/pylearn2_gcn_whitened/train.pkl')
-patch_heigh = 8
-patch_width = 8
+patch_heigh = 3
+patch_width = 3
 patch_step  = 3
 
 
@@ -32,11 +32,15 @@ def validate(recogniter, test_data, test_label, limit=100):
                     'pixel': patch.reshape((input_len)).tolist() ,
                     'label': 'no'
                     }
-            inferences = recogniter.run(input_data, learn=False, class_learn=False,learn_layer=None)
+            inferences = recogniter.run(input_data, learn=True, class_learn=False,learn_layer=None)
 
 
-            best_result = inferences['classifier_region1']['best']
-            patch_result[best_result['value']] += best_result['prob']
+            best_result = inferences['classifier_region2']['best']
+            #patch_result[best_result['value']] += best_result['prob']
+            patch_result[best_result['value']] += 1
+
+        # print test_label[i][0]
+        # print patch_result
 
         if test_label[i][0] == max(patch_result.items(), key=lambda x:x[1])[0]:
             result.append(1)
@@ -67,12 +71,15 @@ def main():
                     'label': train_label[i][0]
                     }
             inferences = recogniter.run(input_data, learn=True, class_learn=True, learn_layer=None)
-
+            #recogniter.layer_output(input_data)
             recogniter.print_inferences(input_data, inferences)
+
+        print train_label[i][0] , inferences['classifier_region1']['best']
+
         recogniter.reset()
 
         # validate
-        if i % 3 == 0:
+        if i % 50 == 0 and not i == 0:
             valid = validate(recogniter, test_data, test_label, limit=30)
             print '%d : valid: %8.5f' % (i, valid)
 

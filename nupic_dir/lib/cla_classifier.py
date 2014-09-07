@@ -360,9 +360,9 @@ class ClaClassifier():
         for name in self.dest_region_params.keys():
             self.network.regions["tp_"+name].getSelf().resetSequenceStates()
 
-        for sensor_name in self.sensor_params.keys():
-            sensor = self.network.regions[sensor_name].getSelf()
-            sensor.dataSource = DataBuffer()
+        # for sensor_name in self.sensor_params.keys():
+        #     sensor = self.network.regions[sensor_name].getSelf()
+        #     sensor.dataSource = DataBuffer()
 
     def enable_class_learning_mode(self, enable):
         for name in self.dest_region_params.keys():
@@ -430,15 +430,15 @@ class ClaClassifier():
             print "#################################### ", name
             print
             print "==== SP layer ===="
-            print "input:  ", SPRegion.getInputData("bottomUpIn").nonzero()[0]
-            print "output: ", SPRegion.getOutputData("bottomUpOut").nonzero()[0]
+            print "input:  ", SPRegion.getInputData("bottomUpIn").nonzero()[0][:20]
+            print "output: ", SPRegion.getOutputData("bottomUpOut").nonzero()[0][:20]
             print
             print "==== TP layer ===="
-            print "input:  ", TPRegion.getInputData("bottomUpIn").nonzero()[0]
-            print "output: ", TPRegion.getOutputData("bottomUpOut").nonzero()[0]
+            print "input:  ", TPRegion.getInputData("bottomUpIn").nonzero()[0][:20]
+            print "output: ", TPRegion.getOutputData("bottomUpOut").nonzero()[0][:20]
             print
             print "==== Predict ===="
-            print TPRegion.getSelf()._tfdr.topDownCompute().copy().nonzero()[0][:10]
+            print TPRegion.getSelf()._tfdr.topDownCompute().copy().nonzero()[0][:20]
             print
 
     def save(self, path):
