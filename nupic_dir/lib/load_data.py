@@ -56,7 +56,14 @@ def get_patch(tdata, height=3, width=3, step=1, type='slide'):
 
 if __name__ == "__main__":
     tobological_data, label = load_dataset('/Users/karino-t/repos/nupic_image_recognition/data/pylearn2_gcn_whitened/test.pkl')
+    print tobological_data.shape
+    topo_list =  tobological_data.reshape([30720000])
+    print topo_list.shape
+    print max(topo_list.tolist()), min(topo_list.tolist())
+    print numpy.mean(topo_list)
+    print numpy.std(topo_list)
 
-    for i, data in enumerate(tobological_data):
-        patch_data, movement = get_patch(data, height=5, width=5, step=3)
-        print i, patch_data.shape, movement.shape, label[i]
+
+    # for i, data in enumerate(tobological_data):
+    #     patch_data, movement = get_patch(data, height=5, width=5, step=3)
+    #     print i, patch_data.shape, movement.shape, label[i]
