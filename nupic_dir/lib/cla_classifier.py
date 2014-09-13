@@ -87,7 +87,8 @@ class ClaClassifier():
                 }
             }
 
-
+        # tp
+        self.tp_enable = True
 
         # net structure
         self.net_structure = OrderedDict()
@@ -109,18 +110,23 @@ class ClaClassifier():
 
     def _makeRegion(self, name, params):
         sp_name    = "sp_" + name
-        tp_name    = "tp_" + name
+        if self.tp_enable:
+            tp_name    = "tp_" + name
         class_name = "class_" + name
 
         # addRegion
         self.network.addRegion(sp_name, "py.SPRegion", json.dumps(params['SP_PARAMS']))
-        self.network.addRegion(tp_name, "py.TPRegion", json.dumps(params['TP_PARAMS']))
+        if self.tp_enable:
+            self.network.addRegion(tp_name, "py.TPRegion", json.dumps(params['TP_PARAMS']))
         self.network.addRegion( class_name, "py.CLAClassifierRegion", json.dumps(params['CLASSIFIER_PARAMS']))
 
         encoder = MultiEncoder()
         encoder.addMultipleEncoders(self.class_encoder_params)
         self.classifier_encoder_list[class_name]  = encoder
-        self.classifier_input_list[class_name]    = tp_name
+        if self.tp_enable:
+            self.classifier_input_list[class_name]    = tp_name
+        else:
+            self.classifier_input_list[class_name]    = sp_name
 
     def _linkRegion(self, src_name, dest_name):
         sensor     =  src_name
@@ -128,9 +134,13 @@ class ClaClassifier():
         tp_name    = "tp_" + dest_name
         class_name = "class_" + dest_name
 
-        self.network.link(sensor, sp_name, "UniformLink", "")
-        self.network.link(sp_name, tp_name, "UniformLink", "")
-        self.network.link(tp_name, class_name, "UniformLink", "")
+        if self.tp_enable:
+            self.network.link(sensor, sp_name, "UniformLink", "")
+            self.network.link(sp_name, tp_name, "UniformLink", "")
+            self.network.link(tp_name, class_name, "UniformLink", "")
+        else:
+            self.network.link(sensor, sp_name, "UniformLink", "")
+            self.network.link(sp_name, class_name, "UniformLink", "")
 
 
     def _initRegion(self, name):
@@ -143,12 +153,13 @@ class ClaClassifier():
         SP.setParameter("learningMode", True)
         SP.setParameter("anomalyMode", True)
 
-        # setting tp
-        TP = self.network.regions[tp_name]
-        TP.setParameter("topDownMode", False)
-        TP.setParameter("learningMode", True)
-        TP.setParameter("inferenceMode", True)
-        TP.setParameter("anomalyMode", False)
+        # # setting tp
+        if self.tp_enable:
+            TP = self.network.regions[tp_name]
+            TP.setParameter("topDownMode", False)
+            TP.setParameter("learningMode", True)
+            TP.setParameter("inferenceMode", True)
+            TP.setParameter("anomalyMode", False)
 
         # classifier regionを定義.
         classifier = self.network.regions[class_name]
@@ -218,7 +229,10 @@ class ClaClassifier():
                 if source in self.sensor_params.keys():
                     self._linkRegion(source, dest)
                 else:
-                    self._linkRegion("tp_" + source, dest)
+                    if self.tp_enable:
+                        self._linkRegion("tp_" + source, dest)
+                    else:
+                        self._linkRegion("sp_" + source, dest)
 
         # initialize
         print 'initializing network ...'
@@ -262,7 +276,7 @@ class ClaClassifier():
 
 
         # anomaly
-        inferences["anomaly"] = self._calc_anomaly()
+        #inferences["anomaly"] = self._calc_anomaly()
 
         return inferences
 
@@ -357,8 +371,9 @@ class ClaClassifier():
         """
         reset sequence
         """
-        for name in self.dest_region_params.keys():
-            self.network.regions["tp_"+name].getSelf().resetSequenceStates()
+        # for name in self.dest_region_params.keys():
+        #     self.network.regions["tp_"+name].getSelf().resetSequenceStates()
+        return
 
         # for sensor_name in self.sensor_params.keys():
         #     sensor = self.network.regions[sensor_name].getSelf()
@@ -375,16 +390,19 @@ class ClaClassifier():
         if layer_name is None:
             for name in self.dest_region_params.keys():
                 self.network.regions["sp_"+name].setParameter("learningMode", enable)
-                self.network.regions["tp_"+name].setParameter("learningMode", enable)
+                if self.tp_enable:
+                    self.network.regions["tp_"+name].setParameter("learningMode", enable)
                 self.network.regions["class_"+name].setParameter("learningMode", enable)
         else:
             for name in self.dest_region_params.keys():
                 self.network.regions["sp_"+name].setParameter("learningMode", not enable)
-                self.network.regions["tp_"+name].setParameter("learningMode", not enable)
+                if self.tp_enable:
+                    self.network.regions["tp_"+name].setParameter("learningMode", not enable)
                 self.network.regions["class_"+name].setParameter("learningMode", not enable)
             for name in layer_name:
                 self.network.regions["sp_"+name].setParameter("learningMode", enable)
-                self.network.regions["tp_"+name].setParameter("learningMode", enable)
+                if self.tp_enable:
+                    self.network.regions["tp_"+name].setParameter("learningMode", enable)
                 self.network.regions["class_"+name].setParameter("learningMode", enable)
 
 
@@ -409,8 +427,8 @@ class ClaClassifier():
         except:
             pass
 
-        for name in sorted(self.dest_region_params.keys()):
-            print "%3.2f," % (inferences["anomaly"][name]),
+        # for name in sorted(self.dest_region_params.keys()):
+        #     print "%3.2f," % (inferences["anomaly"][name]),
 
         # for name in sorted(self.dest_region_params.keys()):
         #     print "%5s," % name,
@@ -425,7 +443,8 @@ class ClaClassifier():
 
         for name in self.dest_region_params.keys():
             SPRegion = self.network.regions["sp_"+name]
-            TPRegion = self.network.regions["tp_"+name]
+            if self.tp_enable:
+                TPRegion = self.network.regions["tp_"+name]
 
             print "#################################### ", name
             print
@@ -433,10 +452,11 @@ class ClaClassifier():
             print "input:  ", SPRegion.getInputData("bottomUpIn").nonzero()[0][:20]
             print "output: ", SPRegion.getOutputData("bottomUpOut").nonzero()[0][:20]
             print
-            print "==== TP layer ===="
-            print "input:  ", TPRegion.getInputData("bottomUpIn").nonzero()[0][:20]
-            print "output: ", TPRegion.getOutputData("bottomUpOut").nonzero()[0][:20]
-            print
+            if self.tp_enable:
+                print "==== TP layer ===="
+                print "input:  ", TPRegion.getInputData("bottomUpIn").nonzero()[0][:20]
+                print "output: ", TPRegion.getOutputData("bottomUpOut").nonzero()[0][:20]
+                print
             print "==== Predict ===="
             print TPRegion.getSelf()._tfdr.topDownCompute().copy().nonzero()[0][:20]
             print
