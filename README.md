@@ -63,6 +63,33 @@ nupic_imagenet
   export PYLEARN2_VIEWER_COMMAND="open -Wn"
   ```
 
+## Technique
+### [ImageNet Classification with Deep Convolutional Neural Networks]()
++ architecture
++ input
+  + (3, 224, 224)
++ convolutional layer
+  + 1. 96 kernel, (11, 11) max-pooling
+  + 2. 256 kernel, (5,5,48) max-pooling 
+  + 3. 384 kernel, (3,3,256)  all connect with second layer
+  + 4. 384 kernel, (3,3,192)
+  + 5. 384 kernel, (3,3,192) max-pooling 
++ full connected layer
+  + 6. 2048+2048 sigmoid?, tanh?, other?
+  + 7. 2048+2048
+  + 8. softmax 1000
++ reducing overfiting
+  + data augmentation
+  + dropout (full connected layer ?)
+
+### [Maxout Networks](http://jmlr.org/proceedings/papers/v28/goodfellow13.pdf)
++ 
+
+### [Network in Network]()
+
+
+
+
 
 ## simple task
 ### CIFAR-10

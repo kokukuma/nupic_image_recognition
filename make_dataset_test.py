@@ -30,7 +30,7 @@ preprocess
 
 # 1.
 preprocessor = preprocessing.ZCA()
-#train.apply_preprocessor(preprocessor=preprocessor , can_fit=True)
+train.apply_preprocessor(preprocessor=preprocessor , can_fit=True)
 
 
 # 2. こっちで作成したpklをshow_exampleで見ると全て真っ黒になってしまった...
@@ -79,6 +79,6 @@ pv.show()
 """
 save
 """
-# train.use_design_loc(output_dir+'/test.npy')
-# serial.save(output_dir + '/test.pkl', train)
-# serial.save(output_dir + '/preprocessor.pkl', preprocessor)
+train.use_design_loc(output_dir+'/test.npy')
+serial.save(output_dir + '/test.pkl', train)
+serial.save(output_dir + '/preprocessor.pkl', preprocessor)
