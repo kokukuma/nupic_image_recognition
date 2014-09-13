@@ -21,7 +21,8 @@ output_dir = os.path.abspath('./data/pylearn2_test')
 serial.mkdir( output_dir )
 
 # input
-train = cifar10.CIFAR10(which_set = 'train', gcn=55.)
+#train = cifar10.CIFAR10(which_set = 'train', gcn=55.)
+train = cifar10.CIFAR10(which_set = 'train', two_image=True)
 
 
 """
@@ -29,9 +30,8 @@ preprocess
 """
 
 # 1.
-preprocessor = preprocessing.ZCA()
-train.apply_preprocessor(preprocessor=preprocessor , can_fit=True)
-
+#preprocessor = preprocessing.ZCA()
+#train.apply_preprocessor(preprocessor=preprocessor , can_fit=True)
 
 # 2. こっちで作成したpklをshow_exampleで見ると全て真っ黒になってしまった...
 #    使っている中身も同じだし, show_exampleで表示されるmin/mean/maxも, どちらも同じになっているんだけど...
@@ -53,7 +53,7 @@ train.apply_preprocessor(preprocessor=preprocessor , can_fit=True)
 
 
 """
-show train object
+show train object by pylearn2
 """
 print train
 rows = 10
@@ -64,16 +64,29 @@ examples = train.get_batch_topo(rows*cols)
 
 # これが無いと...
 #  ValueError: When rescale is set to False, pixel values must lie in [-1,1]. Got [-1.611357, 2.001721].
+# 多分, gcnとか使ってる場合.
 examples = train.adjust_for_viewer(examples)
-#examples /= numpy.abs(examples).max()
-
 
 # 画像出力
-pv = patch_viewer.PatchViewer((rows, cols), examples.shape[1:3], is_color=True)
+pv = patch_viewer.PatchViewer((rows, cols), examples.shape[1:3], is_color=False)
 for i in xrange(rows*cols):
     pv.add_patch(examples[i, :, :, :], activation=0.0, rescale=False)
 pv.show()
 
+
+"""
+show train object by PIL
+"""
+# from PIL import Image
+# examples = train.get_batch_topo(rows*cols)
+# test_img = Image.new("RGB",(32,32),(255,0,0))
+# use putpixel
+# for i in range(32):
+#   for j in range(32):
+#       test_img.putpixel((i,j), tuple(examples.astype(int)[0][j][i]))
+#       test_img.show()
+# use putdata
+# test_img.putdata(numpy.ravel(examples.astype(int)[0]))
 
 
 """
@@ -81,4 +94,4 @@ save
 """
 train.use_design_loc(output_dir+'/test.npy')
 serial.save(output_dir + '/test.pkl', train)
-serial.save(output_dir + '/preprocessor.pkl', preprocessor)
+#serial.save(output_dir + '/preprocessor.pkl', preprocessor)

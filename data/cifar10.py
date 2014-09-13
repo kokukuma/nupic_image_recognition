@@ -41,7 +41,7 @@ class CIFAR10(dense_design_matrix.DenseDesignMatrix):
 
     def __init__(self, which_set, center=False, rescale=False, gcn=None,
                  one_hot=None, start=None, stop=None, axes=('b', 0, 1, 'c'),
-                 toronto_prepro = False, preprocessor = None):
+                 toronto_prepro = False, preprocessor = None, two_image=False):
         # note: there is no such thing as the cifar10 validation set;
         # pylearn1 defined one but really it should be user-configurable
         # (as it is here)
@@ -55,7 +55,8 @@ class CIFAR10(dense_design_matrix.DenseDesignMatrix):
         ntest = 10000
 
         # we also expose the following details:
-        self.img_shape = (3, 32, 32)
+        self.img_shape  = (3, 32, 32)
+        self.img_shape2 = (32, 32,3)
         self.img_size = N.prod(self.img_shape)
         self.n_classes = 10
         self.label_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
@@ -79,6 +80,25 @@ class CIFAR10(dense_design_matrix.DenseDesignMatrix):
 
         # load test data
         data = CIFAR10._unpickle('test_batch')
+
+        # 2value image
+        # can not use other option when you use two_image option
+        print x.shape
+
+        if two_image:
+            from PIL import Image
+            two_value_x = []
+            self.img_shape  = (1, 32, 32)
+            self.img_shape2 = (32, 32,1)
+
+            for i,pixel in enumerate(x.reshape(50000, 3, 32, 32)):
+                if i % 1000 == 0:
+                    print i
+                pixel = np.transpose(pixel, (1,2,0))
+                test_img = Image.new("RGB",(32,32),(255,0,0))
+                test_img.putdata([tuple(x.tolist()) for x in pixel.reshape(1024,3)])
+                two_value_x.append([x for x in test_img.convert("1").getdata()] )
+            x = np.asarray(two_value_x)
 
         # process this data
         Xs = {'train': x[0:ntrain],
@@ -145,7 +165,9 @@ class CIFAR10(dense_design_matrix.DenseDesignMatrix):
         if which_set == 'test':
             assert X.shape[0] == 10000
 
-        view_converter = dense_design_matrix.DefaultViewConverter((32, 32, 3),
+        # view_converter = dense_design_matrix.DefaultViewConverter((32, 32, 3),
+        #                                                           axes)
+        view_converter = dense_design_matrix.DefaultViewConverter(self.img_shape2,
                                                                   axes)
 
         super(CIFAR10, self).__init__(X=X, y=y, view_converter=view_converter,
