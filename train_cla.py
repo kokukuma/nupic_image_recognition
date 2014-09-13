@@ -14,9 +14,9 @@ from nupic_dir.lib.load_data import load_dataset, get_patch
 
 test_data, test_label   = load_dataset('./data/pylearn2_gcn_whitened/test.pkl')
 train_data, train_label = load_dataset('./data/pylearn2_gcn_whitened/train.pkl')
-patch_heigh = 3
-patch_width = 3
-patch_step  = 3
+patch_heigh = 32
+patch_width = 32
+patch_step  = 32
 
 
 def validate(recogniter, test_data, test_label, limit=100):
@@ -35,7 +35,7 @@ def validate(recogniter, test_data, test_label, limit=100):
             inferences = recogniter.run(input_data, learn=True, class_learn=False,learn_layer=None)
 
 
-            best_result = inferences['classifier_region2']['best']
+            best_result = inferences['classifier_region1']['best']
             #patch_result[best_result['value']] += best_result['prob']
             patch_result[best_result['value']] += 1
 
@@ -47,7 +47,7 @@ def validate(recogniter, test_data, test_label, limit=100):
 
         recogniter.reset()
 
-    return len(result)/len(tdata)
+    return float(len(result))/len(tdata)
 
 
 #@profile
@@ -72,9 +72,9 @@ def main():
                     }
             inferences = recogniter.run(input_data, learn=True, class_learn=True, learn_layer=None)
             #recogniter.layer_output(input_data)
-            recogniter.print_inferences(input_data, inferences)
+            #recogniter.print_inferences(input_data, inferences)
 
-        print train_label[i][0] , inferences['classifier_region1']['best']
+        #print train_label[i][0] , inferences['classifier_region1']['best']
 
         recogniter.reset()
 
