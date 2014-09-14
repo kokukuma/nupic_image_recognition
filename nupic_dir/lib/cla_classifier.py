@@ -88,7 +88,7 @@ class ClaClassifier():
             }
 
         # tp
-        self.tp_enable = True
+        self.tp_enable = False
 
         # net structure
         self.net_structure = OrderedDict()
@@ -371,9 +371,9 @@ class ClaClassifier():
         """
         reset sequence
         """
-        # for name in self.dest_region_params.keys():
-        #     self.network.regions["tp_"+name].getSelf().resetSequenceStates()
-        return
+        if self.tp_enable:
+            for name in self.dest_region_params.keys():
+                self.network.regions["tp_"+name].getSelf().resetSequenceStates()
 
         # for sensor_name in self.sensor_params.keys():
         #     sensor = self.network.regions[sensor_name].getSelf()
