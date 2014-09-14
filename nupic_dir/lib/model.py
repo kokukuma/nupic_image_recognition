@@ -31,15 +31,19 @@ sensor_params = {
     },
 }
 
+# TPを入力しなかったら, SPのみのregionとする.
 dest_resgion_data = {
     'region1': {
         'SP_PARAMS':{
             "columnCount": 2024,
             "numActiveColumnsPerInhArea": 40,
             },
-        'TP_PARAMS':{
-            "cellsPerColumn": 32,
-            },
+        # 'TP_PARAMS':{
+        #     "cellsPerColumn": 32,
+        #     },
+
+        # Noneを指定すると, それを使わない. default値も設定されない.
+        'TP_PARAMS': None,
         },
     # 'region2': {
     #     'SP_PARAMS':{
@@ -52,32 +56,26 @@ dest_resgion_data = {
     #         "cellsPerColumn": 32,
     #         },
     #     },
- }
+}
 
-class_encoder_params = {
-    "label": {
-        "type": "CategoryEncoder",
-        "fieldname": u"label",
-        "name": u"label",
-        "categoryList": [i for i in range(10)],
-        "w": 21,
-        },
+
+define_classifier = {
+    'region1': {
+        'step': 0,
+        'predict_value': 'label',
+        'encoder': {
+            "label": {
+                "type": "CategoryEncoder",
+                "fieldname": u"label",
+                "name": u"label",
+                "categoryList": [i for i in range(10)],
+                "w": 21,
+            }
+        }
     }
+}
 
+define_anomaly = {
+    'region1': {}
+}
 
-# TODO: こんな形で予測するところだけにclassifierを設置.
-#       stepもここで指定したい.
-# predict_data = {
-#     'predict1': {
-#         'region': 'region1',
-#         'step': 0,
-#         'predict_value': 'ftype',
-#         'encoder': {
-#             "type": "CategoryEncoder",
-#             "fieldname": u"ftype",
-#             "name": u"ftype",
-#             "categoryList": ['plus', 'minus', 'flat', 'sin', 'quad', 'step'],
-#             "w": 21,
-#         }
-#     }
-# }

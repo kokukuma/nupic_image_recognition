@@ -8,7 +8,7 @@ from collections import defaultdict, Counter
 from nupic_dir.lib.cla_classifier import ClaClassifier
 from nupic_dir.lib.function_data import function_data
 from nupic_dir.lib.plotter import Plotter
-from nupic_dir.lib.create_network import net_structure, sensor_params, dest_resgion_data, class_encoder_params
+from nupic_dir.lib.model import net_structure, sensor_params, dest_resgion_data, class_encoder_params
 from nupic_dir.lib.load_data import load_dataset, get_patch
 
 
