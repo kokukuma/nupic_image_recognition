@@ -23,6 +23,7 @@ serial.mkdir( output_dir )
 # input
 #train = cifar10.CIFAR10(which_set = 'train', gcn=55.)
 train = cifar10.CIFAR10(which_set = 'train', two_image=True)
+test = cifar10.CIFAR10(which_set = 'test', two_image=True)
 
 
 """
@@ -92,6 +93,9 @@ show train object by PIL
 """
 save
 """
-train.use_design_loc(output_dir+'/test.npy')
-serial.save(output_dir + '/test.pkl', train)
+train.use_design_loc(output_dir+'/train.npy')
+serial.save(output_dir + '/train.pkl', train)
+test.use_design_loc(output_dir+'/test.npy')
+serial.save(output_dir + '/test.pkl', test)
+
 #serial.save(output_dir + '/preprocessor.pkl', preprocessor)
