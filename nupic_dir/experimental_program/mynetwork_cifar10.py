@@ -229,7 +229,9 @@ def initialize_myNetwork(myNetwork):
     return network
 
 
-def runCifar10Network(train_data, train_label, network, num=0, length=1000, learnMode=True, printDebug=True):
+def runCifar10Network(train_data, train_label, network, datanum=0, length=1000, learnMode=True, printDebug=True):
+    global tnum
+
     patch_heigh = 32
     patch_width = 32
     patch_step  = 32
@@ -240,16 +242,22 @@ def runCifar10Network(train_data, train_label, network, num=0, length=1000, lear
 
     prevPredictedColumns = []
 
-    for i, data in enumerate(train_data[num:num+length]):
+    for i, data in enumerate(train_data[datanum:datanum+length]):
         #print '================= ' + str(i)
         patch_data, movement = get_patch(data, height=patch_heigh, width=patch_width, step=patch_step)
         label = train_label[i][0]
 
+        # ## stochastic_encoder
         # patch_data = numpy.transpose(patch_data, (3, 0, 1,2))[0]
-        # for i in range(1):
+        # for i in range(10):
         #     # 0,255 -> 0,1
         #     patch = stochastic_encoder(patch_data[0])
 
+        ## patch分割
+        # patch_data = numpy.transpose(patch_data, (3, 0, 1,2))[0] / 255
+        # for patch in patch_data:
+
+        # 繰り返し
         patch_data = numpy.transpose(patch_data, (3, 0, 1,2))[0] / 255
         #for patch in patch_data:
         for i in range(1):
@@ -267,13 +275,13 @@ def runCifar10Network(train_data, train_label, network, num=0, length=1000, lear
             # Classifier
             activeCells = temporalPoolerRegion.getOutput().nonzero()[0]
             res = classifierRegion.getObj().compute(
-                            recordNum=num,
+                            recordNum=tnum,
                             patternNZ=activeCells,
                             #patternNZ=activeColumns,
                             classification={
-                                'bucketIdx': createClassifierEncoder().getBucketIndices({'y': label})[0] if  not learnMode else 0,
-                                'actValue': label if  not learnMode else 'no'},
-                            learn= not learnMode,
+                                'bucketIdx': createClassifierEncoder().getBucketIndices({'y': label})[0] if learnMode else 0,
+                                'actValue': label if learnMode else 'no'},
+                            learn=learnMode,
                             infer=True
                             )
             predict = res['actualValues'][res[0].tolist().index(max(res[0]))]
@@ -284,67 +292,14 @@ def runCifar10Network(train_data, train_label, network, num=0, length=1000, lear
             else:
                 pri = "\033[31mNG\033[0m"
             if printDebug:
-                print '%s  y:%s  p:%s  rate:%5.2f  anomaly:%5.2f  %s' % (num, label, predict, max(res[0]), anomalyScore, pri)
+                print '%s  y:%s  p:%s  rate:%5.2f  anomaly:%5.2f  %s' % (tnum, label, predict, max(res[0]), anomalyScore, pri)
 
-            num += 1
+            tnum += 1
 
         network.reset()
 
-    return num, network
+    return network
 
-
-# #@profile
-# def runMyNetwork(network, num=0, learnMode=True):
-#     """
-#     """
-#     spatialPoolerRegion  = network.regions["spatialPoolerRegion"]
-#     temporalPoolerRegion = network.regions["temporalPoolerRegion"]
-#     classifierRegion     = network.regions["classifierRegion"]
-#
-#     prevPredictedColumns = []
-#
-#     for label, dataset in get_color_data().items():
-#         # TODO: Nupic networkみたいに, dataをそのまま投入出来る形の方が良いだろう.
-#         #       そうすると, Sensorをどうするかも考える必要があるか.
-#
-#         for data in dataset:
-#             # Run the network for a single iteration
-#             network.run(data)
-#
-#             # anomaly
-#             activeColumns = spatialPoolerRegion.getOutput().nonzero()[0]
-#             # print activeColumns
-#             # print prevPredictedColumns
-#             anomalyScore = computeAnomalyScore(activeColumns, prevPredictedColumns)
-#             prevPredictedColumns = temporalPoolerRegion.getPredictColumn().nonzero()[0]
-#
-#             # Classifier
-#             activeCells = temporalPoolerRegion.getOutput().nonzero()[0]
-#             res = classifierRegion.getObj().compute(
-#                             recordNum=num,
-#                             patternNZ=activeCells,
-#                             classification={
-#                                 'bucketIdx': createClassifierEncoder().getBucketIndices({'y': label})[0] if  learnMode else 0,
-#                                 'actValue': label if  learnMode else 'no'},
-#                             learn=learnMode,
-#                             infer=True
-#                             )
-#             predict = res['actualValues'][res[0].tolist().index(max(res[0]))]
-#
-#             # print
-#             if label ==  predict:
-#                 pri = "\033[32mOK\033[0m"
-#             else:
-#                 pri = "\033[31mNG\033[0m"
-#             print '%s  y:%s  p:%s  rate:%5.2f  anomaly:%5.2f  %s' % (num, label, predict, max(res[0]), anomalyScore, pri)
-#             #print data
-#
-#             num += 1
-#
-#         print
-#         network.reset()
-#
-#     return num, network
 
 if __name__ == "__main__":
     train_data, train_label = load_dataset('./data/pylearn2_test/train.pkl')
@@ -353,15 +308,16 @@ if __name__ == "__main__":
     network = createMyNetwork()
     initialize_myNetwork(network)
 
-    num = 0
+    tnum    = 0
+    datanum = 0
     for i in range(49):
-        #num, network = runMyNetwork(network, num, learnMode=True)
-        num, network = runCifar10Network(train_data, train_label, network, num, length=1000,learnMode=True, printDebug=True)
         print
-        print num
-        _, network   = runCifar10Network(train_data, train_label, network, 49000, length=100,learnMode=False, printDebug=True)
-    print
-    _, network   = runCifar10Network(train_data, train_label, network, 49000, length=1000,learnMode=False, printDebug=True)
+        print 'train: ' +  str(datanum)
+        network = runCifar10Network(train_data, train_label, network, datanum, length=1000,learnMode=True, printDebug=True)
+        datanum += 1000
+        print
+        print 'valid: ' +  str(datanum)
+        network   = runCifar10Network(train_data, train_label, network, 49000, length=100,learnMode=False, printDebug=True)
 
 
 

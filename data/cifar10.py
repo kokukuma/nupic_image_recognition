@@ -97,7 +97,8 @@ class CIFAR10(dense_design_matrix.DenseDesignMatrix):
                 pixel = np.transpose(pixel, (1,2,0))
                 test_img = Image.new("RGB",(32,32),(255,0,0))
                 test_img.putdata([tuple(x.tolist()) for x in pixel.reshape(1024,3)])
-                two_value_x.append([x for x in test_img.convert("1").getdata()] )
+                #two_value_x.append([x for x in test_img.convert("1").getdata()] )
+                two_value_x.append([x for x in test_img.convert("L").getdata()] )
             x = np.asarray(two_value_x)
 
         # process this data
