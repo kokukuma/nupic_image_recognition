@@ -183,9 +183,9 @@ def createMyNetworkSimple():
     network = myNetwork()
 
     # set SP
-    PARAMS['SP']["inputDimensions"]             = (20, 32, 32)
-    PARAMS['SP']["columnDimensions"]            = (10, 8, 8)
-    PARAMS['SP']["numActiveColumnsPerInhArea"]  = int(10. * 8. * 8. * 0.02)
+    PARAMS['SP']["inputDimensions"]             = (20, 4, 4)
+    PARAMS['SP']["columnDimensions"]            = (5, 8, 8)
+    PARAMS['SP']["numActiveColumnsPerInhArea"]  = int(15. * 8. * 8. * 0.02)
     network.addRegion("simplePoolerRegion", "SP", PARAMS['SP'])
     network.calc_sort.append("simplePoolerRegion")
 
@@ -198,6 +198,28 @@ def createMyNetworkSimple():
     network.initialize()
 
     return network
+
+def createMyNetworkSimple2():
+
+    network = myNetwork()
+
+    # set SP
+    PARAMS['SP']["inputDimensions"]             = (5, 16, 16)
+    PARAMS['SP']["columnDimensions"]            = (2, 16, 16)
+    PARAMS['SP']["numActiveColumnsPerInhArea"]  = int(15. * 16. * 16. * 0.02)
+    network.addRegion("simplePoolerRegion", "SP", PARAMS['SP'])
+    network.calc_sort.append("simplePoolerRegion")
+
+    # # set TP
+    # PARAMS['TP']['numberOfCols']   = 20 * 20
+    # PARAMS['TP']['cellsPerColumn'] = 10
+    # network.addRegion("stpPoolerRegion", "TP", PARAMS['TP'])
+    # network.link("simplePoolerRegion", "stpPoolerRegion")
+
+    network.initialize()
+
+    return network
+
 
 
 def createMyNetworkComplex():
@@ -247,13 +269,14 @@ def set_learn_myNetwork(simpleNetwork, myNetwork, enable):
     SPRegion = myNetwork.regions["spatialPoolerRegion"]
     SPRegion.setLearnmode(enable)
 
+
     TPRegion = myNetwork.regions["temporalPoolerRegion"]
     TPRegion.setLearnmode(enable)
     return
 
 
 #@profile
-def runCifar10Network(train_data, train_label, simpleNetwork, complexNetwork, datanum=0, length=1000, learnMode=True):
+def runCifar10Network(train_data, train_label, simpleNetwork, simple2Network, complexNetwork, datanum=0, length=1000, learnMode=True):
 
     def toOneArray(Array):
         input_len = reduce(lambda x,y: x * y, Array.shape)
@@ -264,12 +287,13 @@ def runCifar10Network(train_data, train_label, simpleNetwork, complexNetwork, da
     set_learn_myNetwork(simpleNetwork, complexNetwork, learnMode)
     result = []
 
-    patch_heigh = 32
-    patch_width = 32
-    patch_step  = 32
+    patch_heigh = 8
+    patch_width = 8
+    patch_step  = 8
 
     simplePoolerRegion   = simpleNetwork.regions["simplePoolerRegion"]
     #stpPoolerRegion      = simpleNetwork.regions["stpPoolerRegion"]
+    simple2PoolerRegion  = simple2Network.regions["simplePoolerRegion"]
 
     spatialPoolerRegion  = complexNetwork.regions["spatialPoolerRegion"]
     temporalPoolerRegion = complexNetwork.regions["temporalPoolerRegion"]
@@ -298,42 +322,221 @@ def runCifar10Network(train_data, train_label, simpleNetwork, complexNetwork, da
 
         dataset  = []
 
-        for pnum, patch in enumerate(patch_data):
+
+        for pnum, patch2 in enumerate(patch_data):
+
+            activeset = numpy.zeros((4, 5, 8, 8))
+
+            small_patch_data, movement = get_patch(patch2, height=4, width=4, step=4)
+            for spnum, patch in enumerate(small_patch_data):
+
+        #for pnum, patch in enumerate(patch_data):
+
+                """
+                stochastic_encoder
+                    return activeColumns
+                    => 色の濃さも形状もバラバラぽい.
+                """
+                # dataset = list(stochastic_encoder(patch))
+                # for d in dataset:
+                #     simpleNetwork.run(toOneArray(d))
+                #     activeColumns = stpPoolerRegion.getOutput()
+                #     #print activeColumns.nonzero()[0]
+
+                """
+                temporal_scalor_encoder
+                    return activeColumns
+                    => 色の濃さは共通している.
+                    => 形状は多少バラバラに見える.
+                """
+                # dataset = temporal_scalor_encoder(patch)
+                # print dataset.shape
+                # for d in dataset:
+                #     simpleNetwork.run(toOneArray(d))
+                #     activeColumns = stpPoolerRegion.getOutput()
+                # #print activeColumns.nonzero()[0]
+
+                """
+                temporal_scalor_encoder
+                3次元SP利用
+                    return activeColumns
+                    => 色の濃さは共通している.
+                    => 形状も多少共通しているように見える.
+                    => そしてTPないから速い.
+                """
+                dataset = temporal_scalor_encoder(patch)
+                simpleNetwork.run(toOneArray(dataset))
+                activeColumns = simplePoolerRegion.getOutput()
+
+                """
+                scalar_encoder
+                    return activeColumns
+                    => 少なくとも色の濃さは共通している.
+                """
+                # patch_sdr  = numpy.zeros((vector_encoder.getWidth()))
+                # vector_encoder.encodeIntoArray({'x': toOneArray(patch).tolist()}, patch_sdr)
+                # simpleNetwork.run(toOneArray(patch_sdr))
+                # activeColumns = simplePoolerRegion.getOutput()
+
+
+                #sdr_data[str(label)].append(activeColumns.nonzero()[0])
+
+                """
+                Task2. 特定のセル発火時のpatchを表示するため
+                """
+                # if 165 in activeColumns.nonzero()[0]:
+                #     label_patch_data.append(patch)
+                #     print datanum_i, pnum, activeColumns.nonzero()[0]
+
+                """
+                Task3. セルが一定以上同じSDR
+                """
+                # if spnum >= 3:
+                #     if base_sdr == None:
+                #         base_patch = patch
+                #         base_sdr = activeColumns.nonzero()[0]
+                #         print 'base : ', base_sdr
+                #     else:
+                #         if len(set(base_sdr) & set(activeColumns.nonzero()[0]))  >= len(base_sdr)/3:
+                #             print datanum_i, pnum, activeColumns.nonzero()[0]
+                #             label_patch_data.append(patch)
+                #
+
+                """
+                Task4. 2層構造
+                    => 色, 形状もそれほど合ってる気がしない.
+                """
+                activeset[spnum] = activeColumns.reshape((5, 8, 8))
+
+
+            #for patch in numpy.transpose(activeColumns, (4, 15, 16,16)):
+            patch_list = numpy.zeros((5, 16, 16))
+            for num, res in enumerate(list(numpy.transpose(activeset, (1, 0, 2, 3)))):
+                patch_list[num] = numpy.r_[ numpy.c_[res[0], res[1]], numpy.c_[res[2], res[3]]]
 
             """
-            temporal_scalor_encoder
-            3次元SP利用
-                return activeColumns
-                => 色の濃さは共通している.
-                => 形状も多少共通しているように見える.
-                => そしてTPないから速い.
+            Task4. 2層構造
             """
-            dataset = temporal_scalor_encoder(patch)
-            simpleNetwork.run(toOneArray(dataset))
-            activeColumns = simplePoolerRegion.getOutput()
+            simple2Network.run(toOneArray(patch_list))
+            activeColumns = simple2PoolerRegion.getOutput()
 
             sdr_data[str(label)].append(activeColumns.nonzero()[0])
 
             """
+            Task4. 2層構造
             """
             # if 4 in activeColumns.nonzero()[0]:
-            #     label_patch_data.append(patch)
+            #     label_patch_data.append(patch2)
             #     print datanum_i, pnum, activeColumns.nonzero()[0]
-            if pnum >= 0:
+            if pnum >= 5:
                 if base_sdr == None:
-                    base_patch = patch
+                    base_patch = patch2
                     base_sdr = activeColumns.nonzero()[0]
                     print 'base : ', base_sdr
                 else:
-                    if len(set(base_sdr) & set(activeColumns.nonzero()[0]))  >= len(base_sdr)/2:
+                    if len(set(base_sdr) & set(activeColumns.nonzero()[0]))  >= len(base_sdr)/1.5:
                         print datanum_i, pnum, activeColumns.nonzero()[0]
-                        label_patch_data.append(patch)
+                        label_patch_data.append(patch2)
+
+
+
+
+
+
+        datanum_i += 1
+        continue
+
+    """
+    Task2. 特定のセルが発火したときのpatch表示
+    Task3. セルが一定以上同じSDR
+    """
+    from PIL import Image
+    img = Image.new('L', (80, 80))
+    numpy.random.shuffle(label_patch_data)   # 同じ画像内ばかりでないようにshuffle.
+    #label_patch_data.insert(0, base_patch)   # 左上がbase_patchになるように.
+    for i, patch in enumerate(label_patch_data[:100]):
+        image_patch = patch.reshape((8,8))
+        for a in range(8):
+            for b in range(8):
+                aidx = (i * 8 + a)  % 80
+                bidx = (i / 10) * 8 + b
+                img.putpixel((bidx,aidx), image_patch[a][b])
+    img.show()
+
+
+    # Task1. 得られるSDRは, 同じlabelの集合の方が共通するカラムが多いか確認.
+    #        => そんなことない. label集合からとっても, 全集合からとっても変わりなし.
+
+    def sample_and_cell(data):
+        numpy.random.shuffle(data)
+        return len(set(data[0]) & set(data[1]))
+
+    print '============ same cell in SDR =============='
+    sample_num = 10000
+    for label, data in sorted(sdr_data.items(), key=lambda x: x[0]):
+        cell_num = []
+        for x in range(sample_num):
+            cell_num.append(sample_and_cell(data))
+        print  label, round(numpy.mean(cell_num), 3), round(numpy.std(cell_num),3)
+        continue
+
+    cell_num = []
+    data =  reduce(lambda x,y: x+y, sdr_data.values())
+    for x in range(sample_num):
+        cell_num.append(sample_and_cell(data))
+    print  "all", round(numpy.mean(cell_num), 3), round(numpy.std(cell_num), 3)
+
+
+
+
+
+    for x in range(0):
+
+        # simple_cell_sdr  = numpy.zeros((40960))
+        # for i in range(100/10):
+        #     sum_list = numpy.zeros((64*64))
+        #     for j in range(10):
+        #         sidx = (i*10 + j) * 1024
+        #         eidx = (i*10 + j + 1) * 1024
+        #         image_patch = image_sdr[sidx:eidx]
+        #         simpleNetwork.run(toOneArray(image_patch))
+        #         activeColumns = simplePoolerRegion.getOutput()
+        #         activeColumns[activeColumns == 1] = 0
+        #         sum_list += activeColumns
+        #     sum_list[sum_list>1] = 0            # XOR
+        #     simple_cell_sdr[i*4096:(i+1)*4096] = numpy.clip(sum_list, 0,1)
+
+        # ### label encoder
+        # if learnMode:
+        #     label_sdr = numpy.zeros((label_encoder.getWidth()))
+        #     #label_sdr = numpy.zeros((vector_encoder.getWidth()))
+        #     #label_sdr = numpy.zeros((32,32))
+        #     label_encoder.encodeIntoArray({'y': label_name}, label_sdr)
+        #     dataset.append(label_sdr)
+
+
+        # complex
+        for input_type, patch in enumerate([simple_cell_sdr]):
+            """
+            input_type == 0 : image_sdr
+            input_type == 1 : label_sdr
+            """
+            #print len(patch.nonzero()[0] ), patch.nonzero()[0]
+
+            # run network input
+            complexNetwork.run(toOneArray(patch))
+
+            # anomaly
+            activeColumns = spatialPoolerRegion.getOutput().nonzero()[0]
+            anomalyScore = computeAnomalyScore(activeColumns, prevPredictedColumns)
+            prevPredictedColumns = temporalPoolerRegion.getPredictColumn().nonzero()[0]
 
             # Classifier
-            activeCells = activeColumns.nonzero()[0]
+            activeCells = temporalPoolerRegion.getOutput().nonzero()[0]
             res = classifierRegion.getObj().compute(
                             recordNum=tnum,
                             patternNZ=activeCells,
+                            #patternNZ=activeColumns,
                             classification={
                                 'bucketIdx': createClassifierEncoder().getBucketIndices({'y': label_name})[0] if learnMode else 0,
                                 'actValue': label_name if learnMode else 'no'},
@@ -350,49 +553,9 @@ def runCifar10Network(train_data, train_label, simpleNetwork, complexNetwork, da
             tnum += 1
 
         datanum_i += 1
-        continue
 
-    # """
-    # """
-    # from PIL import Image
-    # img = Image.new('L', (80, 80))
-    # numpy.random.shuffle(label_patch_data)   # 同じ画像内ばかりでないようにshuffle.
-    # #label_patch_data.insert(0, base_patch)   # 左上がbase_patchになるように.
-    # for i, patch in enumerate(label_patch_data[:100]):
-    #     image_patch = patch.reshape((8,8))
-    #     for a in range(8):
-    #         for b in range(8):
-    #             aidx = (i * 8 + a)  % 80
-    #             bidx = (i / 10) * 8 + b
-    #             img.putpixel((bidx,aidx), image_patch[a][b])
-    # img.show()
-
-
-    # Task1. 得られるSDRは, 同じlabelの集合の方が共通するカラムが多いか確認.
-    #        => そんなことない. label集合からとっても, 全集合からとっても変わりなし.
-
-    # def sample_and_cell(data):
-    #     numpy.random.shuffle(data)
-    #     return len(set(data[0]) & set(data[1]))
-
-    # print '============ same cell in SDR =============='
-    # sample_num = 10000
-    # for label, data in sorted(sdr_data.items(), key=lambda x: x[0]):
-    #     cell_num = []
-    #     for x in range(sample_num):
-    #         cell_num.append(sample_and_cell(data))
-    #     print  label, round(numpy.mean(cell_num), 3), round(numpy.std(cell_num),3)
-    #     continue
-    #
-    # cell_num = []
-    # data =  reduce(lambda x,y: x+y, sdr_data.values())
-    # for x in range(sample_num):
-    #     cell_num.append(sample_and_cell(data))
-    # print  "all", round(numpy.mean(cell_num), 3), round(numpy.std(cell_num), 3)
-
-
-
-
+        simpleNetwork.reset()
+        complexNetwork.reset()
 
     if not learnMode:
         print "collect count : ", result.count(True) , "/", len(result)
@@ -402,33 +565,28 @@ def runCifar10Network(train_data, train_label, simpleNetwork, complexNetwork, da
 
 
 if __name__ == "__main__":
-    print "load data "
     train_data, train_label = load_dataset('./data/pylearn2_test/train.pkl')
     #test_data, test_label = load_dataset('./data/pylearn2_test/test.pkl')
 
     deleteParam()
 
-    print "make createMyNetworkSimple"
     simpleNetwork  = createMyNetworkSimple()
+    simple2Network  = createMyNetworkSimple2()
     complexNetwork = createMyNetworkComplex()
 
-    print "initialize createMyNetworkSimple"
     initialize_myNetwork(simpleNetwork, complexNetwork)
 
-
-    print "run network"
     tnum    = 0
     datanum = 0
     for i in range(40):
         print
         print 'train: ' +  str(datanum)
-        simpleNetwork, complexNetwork = runCifar10Network(train_data, train_label, simpleNetwork, complexNetwork, datanum, length=500, learnMode=True)
-        #datanum += 500
-        datanum = 0
+        simpleNetwork, complexNetwork = runCifar10Network(train_data, train_label, simpleNetwork, simple2Network, complexNetwork, datanum, length=500, learnMode=True)
+        datanum += 500
 
-        print
-        print 'valid: ' +  str(datanum)
-        simpleNetwork, complexNetwork = runCifar10Network(train_data, train_label, simpleNetwork, complexNetwork, 49000, length=100, learnMode=False)
+        # print
+        # print 'valid: ' +  str(datanum)
+        # simpleNetwork, complexNetwork = runCifar10Network(train_data, train_label, simpleNetwork, complexNetwork, 49000, length=100, learnMode=False)
 
 
     # datanum = 0

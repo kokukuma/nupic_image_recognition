@@ -34,7 +34,7 @@ class Network(object):
         """
         # TODO: これは良くない.
         self.calc_sort.append(src_region)
-        if src_region not in self.calc_sort:
+        if dst_region not in self.calc_sort:
             self.calc_sort.append(dst_region)
 
         self.network[src_region].append(dst_region)
